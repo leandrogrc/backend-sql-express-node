@@ -14,5 +14,4 @@ router
   .delete(delUser)
   .put(modifyUser);
 
-router.route("/api/users/:id").get(querySingleUser);
 module.exports = { router };
