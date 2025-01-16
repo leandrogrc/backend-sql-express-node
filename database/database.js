@@ -12,7 +12,11 @@ const pool = mysql
 const getUsers = async () => {
   const [result] = await pool.query(`select * from users`);
   if (!result[0]) return "No users in the database";
-  else return result;
+  else
+    return {
+      message: "All users fetched!",
+      result,
+    };
 };
 
 const getUser = async (id) => {
@@ -24,16 +28,34 @@ const getUser = async (id) => {
     [id]
   );
   if (!result) return "No user with this id";
-  else return result;
+  else
+    return {
+      message: "User fetched",
+      result,
+    };
 };
 
-const newUser = async (name, email) => {
+const newUser = async (username, email, password) => {
+  const [[checkUsername]] = await pool.query(
+    `
+    select *
+    from users
+    where username = ?
+    `,
+    [username]
+  );
+
+  if (checkUsername)
+    return {
+      message: "Username not available! Choose another one please.",
+    };
+
   const [result] = await pool.query(
     `
-        insert into users (name, email)
-        values (?,?)
+        insert into users (username, email, password)
+        values (?,?,?)
     `,
-    [name, email]
+    [username, email, password]
   );
   return await getUser(result.insertId);
 };
@@ -47,19 +69,22 @@ const deleteUser = async (id) => {
     `,
     [id]
   );
-  return await getUsers();
+  return {
+    message: "User deleted",
+    users_on_database: await getUsers(),
+  };
 };
 
-const updateUser = async (id, name, email) => {
-  const [result] = await pool.query(
+const updateUser = async (id, username, email, password) => {
+  await pool.query(
     `
     update users
-    set name = ?, email = ?
+    set username = ?, email = ?, password = ?
     where id = ?
     `,
-    [name, email, id]
+    [username, email, password, id]
   );
-  return result;
+  return { message: "User updated!" };
 };
 
 module.exports = { getUsers, getUser, newUser, deleteUser, updateUser };
